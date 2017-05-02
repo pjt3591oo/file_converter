@@ -1,7 +1,16 @@
 #  file convert module
 pdf, rtf, docx, hwp를 html로 변환을 해주는 모듈입니다.
 
-# 의존모듈
+##프로젝트 설치 및 기여방법
+
+```bash
+$ git clone https://github.com/pjt3591oo/file_converter.git
+$ git checkout -b develop origin/develop
+```
+
+해당 프로젝트에 기여를 해주시는 분이라면 develop에서 새로운 브런치를 생성 후 develop으로 pr(pull requests)를 넣어주시면 되겠습니다.
+
+## 의존모듈
 
 * pdf2htmlex(brew, apt-get)
 * pdftohtmljs(npm) : pdf -> html
@@ -38,7 +47,7 @@ $ npm install -g mammoth
 
 위 모듈은 해당 환경에서 설치가 되어있지 않을 경우 에러가 발생할 수 있습니다.
 
-# file path
+## file path
 
 * index.js 
 
@@ -53,7 +62,7 @@ default값은 해당 디렉토리의 input, output입니다.
 
 ---
 
-# release NOTE 
+## release NOTE 
 
 * ### Version 0.1 (2017. 05. 02 Tue)
 
@@ -80,7 +89,7 @@ paper size (/paperw, /paperh)
 margins (/margl, /margr, /margt, /margb)
 ```
 
-# license
+## license
 
 (주)Edipse에서 개발이 진행중입니다.
 
