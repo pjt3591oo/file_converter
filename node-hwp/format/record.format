@@ -1,0 +1,1025 @@
+# HWP 레코드
+tag BEGIN 16;
+tago BEGIN 0 DOCUMENT_PROPERTIES;
+tago BEGIN 1 ID_MAPPINGS;
+tago BEGIN 2 BIN_DATA;
+tago BEGIN 3 FACE_NAME;
+tago BEGIN 4 BORDER_FILL;
+tago BEGIN 5 CHAR_SHAPE;
+tago BEGIN 6 TAB_DEF;
+tago BEGIN 7 NUMBERING;
+tago BEGIN 8 BULLET;
+tago BEGIN 9 PARA_SHAPE;
+tago BEGIN 10 STYLE;
+tago BEGIN 11 DOC_DATA;
+tago BEGIN 12 DISTRIBUTE_DOC_DATA;
+# 13: Reserved
+tago BEGIN 14 COMPATIBLE_DOCUMENT;
+tago BEGIN 15 LAYOUT_COMPATIBILITY;
+tago BEGIN 78 FORBIDDEN_CHAR;
+
+tago BEGIN 50 PARA_HEADER;
+tago BEGIN 51 PARA_TEXT;
+tago BEGIN 52 PARA_CHAR_SHAPE;
+tago BEGIN 53 PARA_LINE_SEG;
+tago BEGIN 54 PARA_RANGE_TAG;
+tago BEGIN 55 CTRL_HEADER;
+tago BEGIN 56 LIST_HEADER;
+tago BEGIN 57 PAGE_DEF;
+tago BEGIN 58 FOOTNOTE_SHAPE;
+tago BEGIN 59 PAGE_BORDER_FILL;
+tago BEGIN 60 SHAPE_COMPONENT;
+tago BEGIN 61 TABLE;
+tago BEGIN 62 SHAPE_COMPONENT_LINE;
+tago BEGIN 63 SHAPE_COMPONENT_RECTANGLE;
+tago BEGIN 64 SHAPE_COMPONENT_ELLIPSE;
+tago BEGIN 65 SHAPE_COMPONENT_ARC;
+tago BEGIN 66 SHAPE_COMPONENT_POLYGON;
+tago BEGIN 67 SHAPE_COMPONENT_CURVE;
+tago BEGIN 68 SHAPE_COMPONENT_OLE;
+tago BEGIN 69 SHAPE_COMPONENT_PICTURE;
+tago BEGIN 70 SHAPE_COMPONENT_CONTAINER;
+tago BEGIN 71 CTRL_DATA;
+tago BEGIN 72 EQEDIT;
+# 73: Reserved
+tago BEGIN 74 SHAPE_COMPONENT_TEXTART;
+tago BEGIN 75 FORM_OBJECT;
+tago BEGIN 76 MEMO_SHAPE;
+tago BEGIN 77 MEMO_LIST;
+tago BEGIN 79 CHART_DATA;
+tago BEGIN 99 SHAPE_COMPONENT_UNKNOWN;
+
+micro FillBrush {
+	UInt32 _BrushType;
+	Switch _BrushType {
+		Case "0":
+			# TODO
+			Int32 _Unknown;
+		Case "1":
+			Group WindowBrush {
+				ColorRef FaceColor;
+				ColorRef HatchColor;
+				enum HatchStyle: Int32 HatchStyle;
+				# TODO
+				Int32 _Unknown;
+				Byte Alpha;
+			}
+		Case "4":
+			Group Gradation {
+				enum GradationType: Byte Type;
+				Int32 Angle;
+				Int32 CenterX; Int32 CenterY;
+				UInt32 Step;
+				UInt32 ColorNum;
+				Array:ColorNum _Colors
+					ColorRef value;
+				# TODO
+				Int32 _Unknown;
+				Byte StepCenter;
+				Byte Alpha;
+			}
+		Else:
+			{{ console.warn("Warning [?>FillBrush]: not processing FillBrush Type '%s'", attr._BrushType); }}
+	}
+}
+
+# 4.1.1. 문서 속성
+record DOCUMENT_PROPERTIES {
+	UInt16 SecCnt;
+	Group BeginNumber {
+		UInt16 Page;
+		UInt16 Footnote;
+		UInt16 Endnote;
+		UInt16 Picture;
+		UInt16 Table;
+		UInt16 Equation;
+	}
+	Group CaretPos {
+		UInt32 List;
+		UInt32 Para;
+		UInt32 Pos;
+	}
+}
+
+# 4.1.2. 아이피 매핑 헤더
+record ID_MAPPINGS {
+	Int32 BinDataCount;
+	Array:7 FontCount
+		Int32 value;
+	Int32 BorderFillCount;
+	Int32 CharShapeCount;
+	Int32 TabDefCount;
+	Int32 NumberingCount;
+	Int32 BulletCount;
+	Int32 ParaShapeCount;
+	Int32 StyleCount;
+	~
+	Int32 MemoCount;
+}
+
+# 4.1.3. 바이너리 데이터
+record BIN_DATA {
+	Bits:2 {
+		0~3 enum BinItemType: Int Type;
+		# TODO: 이 두 개 HML로 옮길 수 있는지 확인하기
+		4~5 Int _Compress;
+		# TODO: DOC: 6~7 맞는지 확인하기
+		6~7 Int _AccessStatus;
+	}
+	Switch Type {
+		Cases "Embedding" "Storage":
+			UInt16 BinData;
+			WString Format;
+		Else:
+			{{ console.warn("Warning [BIN_DATA]: not processing BinItem type '%s'", attr.Type); }}
+	}
+}
+
+# 4.1.4. 글꼴
+record FACE_NAME {
+	Bits:1 {
+		# DOC: 문서에 없음
+		0~1 enum FontType: Int Type;
+		5 Boolean HasDefault;
+		6 Boolean HasShape;
+		7 Boolean HasSubst;
+	}
+	WString Name;
+	{{ if(attr.HasSubst){ }}
+	Group SubstFont {
+		Bits:1 {
+			0~1 enum FontType: Int Type;
+		}
+		WString Name;
+	}
+	{{ } }}
+	{{ if(attr.HasShape){ }}
+	Group TypeInfo {
+		Byte FamilyType;
+		Byte SerifStyle;
+		Byte Weight;
+		Byte Proportion;
+		Byte Contrast;
+		Byte StrokeVariation;
+		Byte ArmStyle;
+		Byte Letterform;
+		Byte Midline;
+		Byte XHeight;
+	}
+	{{ } }}
+	{{ if(attr.HasDefault){ }}
+	# TODO_SOMETIME: 이 곳 채워넣기
+	{{ } }}
+}
+
+# 4.1.5 테두리 / 배경
+record BORDER_FILL {
+	Bits:2 {
+		0 Boolean ThreeD;
+		1 Boolean Shadow;
+		2~4 Int Slash;
+		5~7 Int BackSlash;
+	}
+
+	# DOC: 문서와 다르게 이렇게 저장됨.
+	Group LeftBorder {
+		enum LineType1: UInt8 Type;
+		enum LineWidth: UInt8 Width;
+		ColorRef Color;
+	}
+	Group RightBorder {
+		enum LineType1: UInt8 Type;
+		enum LineWidth: UInt8 Width;
+		ColorRef Color;
+	}
+	Group TopBorder {
+		enum LineType1: UInt8 Type;
+		enum LineWidth: UInt8 Width;
+		ColorRef Color;
+	}
+	Group BottomBorder {
+		enum LineType1: UInt8 Type;
+		enum LineWidth: UInt8 Width;
+		ColorRef Color;
+	}
+	Group Diagonal {
+		enum LineType1: UInt8 Type;
+		enum LineWidth: UInt8 Width;
+		ColorRef Color;
+	}
+
+	micro FillBrush: FillBrush;
+}
+
+# 4.1.6. 글자 모양
+record CHAR_SHAPE{
+	Array:7 _FontIDs
+		Word value;
+	Array:7 _FontRatios
+		UInt8 value;
+	Array:7 _FontCharSpacings
+		Int8 value;
+	Array:7 _FontRelSizes
+		UInt8 value;
+	Array:7 _FontCharOffsets
+		Int8 value;
+	Int32 Height;
+
+	Group Shadow;
+	Group Underline;
+	Group Strikeout;
+	Bits:4 {
+		0 Boolean _Italic;
+		1 Boolean _Bold;
+		2~3 enum UnderlineType: Int Underline:Type;
+		4~7 enum LineType2: Int Underline:Shape;
+		8~10 enum LineType3: Int OutlineType;
+		11~12 enum ShadowType: Int Shadow:Type;
+		13 Boolean _Emboss;
+		14 Boolean _Engrave;
+		15 Boolean _SuperScript;
+		16 Boolean _SubScript;
+		# 17: Reserved
+		18~20 enum StrikeoutType: Int Strikeout:Type;
+		# SymMark는 숫자임.
+		21~24 Int SymMark;
+		25 Boolean UseFontSpace;
+		26~29 enum LineType2: Int Strikeout:Shape;
+		30 Boolean UseKerning;
+	}
+	Int8 Shadow:OffsetX;
+	Int8 Shadow:OffsetY;
+	ColorRef TextColor;
+	ColorRef Underline:Color;
+	ColorRef ShadeColor;
+	ColorRef Shadow:Color;
+	~ # TODO: BorderFillId가 여기에 저장 안 될 때도 있는 것 같다.
+	UInt16 BorderFillId;
+	~
+	ColorRef Strikeout:Color;
+}
+
+# 4.1.7 탭 정의
+record TAB_DEF {
+	Bits:4 {
+		0 Boolean AutoTabLeft;
+		1 Boolean AutoTabRight;
+	}
+	# TODO: count 자세히 확인
+	Int16 _count;
+	{{ if(attr._count){ }}
+	Group TabItem {
+		UInt32 Pos;
+		enum TabItemType: UInt8 Type;
+		# TODO: LineType1? LineType2?
+		enum LineType2: UInt8 Leader;
+	}
+	{{ } }}
+}
+
+# 4.1.8 문단 번호
+record NUMBERING {
+	Array:7 ParaHeads {
+		Bits:4 {
+			0~1 enum AlignmentType2: Int Alignment;
+			2 Boolean UseInstWidth;
+			3 Boolean AutoIndent;
+			4 enum TextOffsetType: Int TextOffsetType;
+			5~8 enum NumberType1: Int NumFormat;
+		}
+		UInt16 WidthAdjust;
+		UInt16 TextOffset;
+		UInt32 CharShape;
+		WString value;
+	}
+	UInt16 Start;
+}
+
+# 4.1.9 글머리표
+record BULLET {
+	# TODO
+}
+
+# 4.1.10 문단 모양
+record PARA_SHAPE {
+	Group ParaMargin;
+	Group ParaBorder;
+	Bits:4 {
+		# LineSpacingType이 2개 있음. (2007 이하, 초과)
+		0~1 enum LineSpacingType: Int ParaMargin:LineSpacingType;
+		2~4 enum AlignmentType1: Int Align;
+		5~6 enum BreakLatinWordType: Int BreakLatinWord;
+		# HML에서 true / false로 구분
+		7 Boolean BreakNonLatinWord;
+		8 Boolean SnapToGrid;
+		9~15 Int Condense;
+		16 Boolean WidowOrphan;
+		17 Boolean KeepWithNext;
+		18 Boolean KeepLines;
+		19 Boolean PageBreakBefore;
+		20~21 enum VerAlignType: Int VerAlign;
+		22 Boolean FontLineHeight;
+		23~24 enum HeadingType: Int HeadingType;
+		25~27 Int Level;
+		28 Boolean ParaBorder:Connect;
+		29 Boolean ParaBorder:IgnoreMargin;
+		# TODO: 문단 꼬리 모양
+	}
+	Int32 ParaMargin:Left;
+	Int32 ParaMargin:Right;
+	# TODO: 간격 종류는 어디에서?
+	Int32 ParaMargin:Indent;
+	Int32 ParaMargin:Prev;
+	Int32 ParaMargin:Next;
+	# 2007 이하
+	Int32 ParaMargin:LineSpacing;
+
+	UInt16 TabDef;
+	UInt16 Heading;
+
+	UInt16 ParaBorder:BorderFill;
+	Int16 ParaBorder:OffsetLeft;
+	Int16 ParaBorder:OffsetRight;
+	Int16 ParaBorder:OffsetTop;
+	Int16 ParaBorder:OffsetBottom;
+
+	Bits:4 {
+		0~1 enum LineWrapType: Int LineWrap;
+		# 2~3: Reserved
+		4 Boolean AutoSpaceEAsianEng;
+		5 Boolean AutoSpaceEAsianNum;
+	}
+	~
+	Bits:4 {
+		0~4 enum LineSpacingType: Int ParaMargin:LineSpacingType;
+	}
+	UInt32 ParaMargin:LineSpacing;
+}
+
+# 4.1.11 스타일
+record STYLE {
+	WString Name;
+	WString EngName;
+	Bits:1 {
+		0~2 enum StyleType: Int Type;
+	}
+	Byte NextStyle;
+	Int16 LangId;
+	UInt16 ParaShape;
+	UInt16 CharShape;
+}
+
+# 4.1.12 문서 임의의 데이터
+record DOC_DATA {}
+
+# 4.1.13 배포용 문서 데이터 (TODO: 이 데이터의 의미 찾기)
+record DISTRIBUTE_DOC_DATA {
+	ByteStream:256 Data;
+}
+
+# 4.1.14 호환 문서 (TODO: enum)
+record COMPATIBLE_DOCUMENT {
+	UInt32 TargetProgram;
+}
+
+# 4.1.15 레이아웃 호환성 (TODO: 각각의 필드가 뜻하는 것 찾기)
+record LAYOUT_COMPATIBILITY {
+	UInt32 _Char;
+	UInt32 _Para;
+	UInt32 _Sec;
+	UInt32 _Obj;
+	UInt32 _Field;
+}
+
+# ??? 금칙 문자 (TODO: 항상 필드 4개인지 확인하기)
+record FORBIDDEN_CHAR {
+	UInt32 _f0_len;
+	UInt32 _f1_len;
+	UInt32 _f2_len;
+	UInt32 _f3_len;
+	{{
+		var read_str = function(len, label){
+			if(len == 0) attr[label] = "\x20";
+			else{
+				attr[label] = "";
+				while(len-->0){
+					attr[label] += String.fromCharCode(
+						data.readUInt16LE(offset.value)
+					);
+					offset.value += 2;
+				}
+			}
+		};
+		read_str(attr._f0_len, "_f0");
+		read_str(attr._f1_len, "_f1");
+		read_str(attr._f2_len, "_f2");
+		read_str(attr._f3_len, "_f3");
+	}}
+}
+
+# 4.2.1. 문단 헤더
+record PARA_HEADER {
+	# TODO: text, control_mask가 뜻하는 것 찾기
+	UInt32 _text;
+	UInt32 _control_mask;
+	UInt16 ParaShape;
+	UInt8 Style;
+	# TODO: 0, 1 -> ?
+	Bits:1 {
+		2 Boolean PageBreak; 
+		3 Boolean ColumnBreak;
+	}
+	# TODO: 아래 필드들 이용하기
+	UInt16 CharShapeCount;
+	UInt16 RangeTagCount;
+	UInt16 AlignInfoCount;
+	
+	UInt32 InstId;
+}
+
+# 4.2.2. 문단의 텍스트
+record PARA_TEXT {
+	# 길이가 저장되지 않는 듯 함.
+	{{
+		var i, c, buf = [], bi = 0;
+		this.text = []; tmp = 0;
+		
+		var flushBuffer = (function(x){
+			var y = tmp;
+			if(buf.length == 0 && !x) return;
+			if(tmp){
+				this.text.push({
+					'type': tmp,
+					'start': bi/2,
+					'data': buf
+				});
+				tmp = 0;
+			}else{
+				this.text.push({
+					'type': 'text',
+					'start': bi/2,
+					'data': buf
+				});
+			}
+			if(x){
+				this.text.push({
+					'type': x,
+					'start': i/2
+				});
+				bi = i+2;
+			}else if(y){
+				bi = i+2;
+			}else{
+				bi = i;
+			}
+			buf = [];
+		}).bind(this);
+
+		for(i=0; i<data.length; i+=2){
+			c = data.readUInt16LE(i);
+			/* in extended? */
+			if(tmp){
+				/* Is closing? */
+				if(c == tmp){
+					flushBuffer();
+				}else{
+					buf.push(c);
+				}
+			}else{
+				switch(c){
+					case 0: case 25: case 26: case 27: case 28: case 29:
+						/* Reserved */
+						break;
+					case 13:
+						/* TODO */
+						break;
+					case 10: case 24: case 30: case 31:
+						flushBuffer(c);
+						break;
+					default:
+						if(c<32){
+							flushBuffer(); tmp = c;
+						}else{
+							buf.push(c);
+						}
+				}
+			}
+		}
+
+		flushBuffer();
+	}}
+	# Text 형식: type=text 또는 type=숫자, start는 시작 지점, data는 데이터
+}
+
+# 4.2.3. 문단의 글자 모양
+record PARA_CHAR_SHAPE {
+	{{
+		this.values = [];
+		for(tmp=0; tmp<data.length; tmp+=8){
+			this.values.push({
+				'start': data.readUInt32LE(tmp),
+				'charShape': data.readUInt32LE(tmp+4)
+			});
+		};
+	}}
+}
+
+# 4.2.4. 문단의 레이아웃
+record PARA_LINE_SEG {
+	# TODO: 적외선 굴절기 제조법 찾기
+}
+
+# 4.2.5. 문단의 영역 태그
+record PARA_RANGE_TAG {
+	Array:* _Data {
+		UInt32 start; UInt32 end;
+		UInt32 data;
+	}
+}
+
+# 4.2.6. 컨트롤 헤더
+record CTRL_HEADER {
+	# TODO: 적절한 이름 정하기
+	4ChID _Type;
+	# 개체 공통 속성 읽기
+	Switch _Type {
+		Cases "eqed" "tbl " "gso ":
+			Group ShapeObject{
+				Group Size;
+				Group Position;
+				Group OutsideMargin;
+				Group ShapeComment;
+				Bits:4 {
+					0 Boolean Position:TreatAsChar;
+					# 1: Reserved
+					2 Boolean Position:AffectLSpacing;
+					3~4 enum VertRelToType: Int Position:VertRelTo;
+					# TODO_SOMETIME: 문서 설명 참고
+					5~7 enum VertAlignType: Int Position:VertAlign;
+					8~9 enum HorzRelToType: Int Position:HorzRelTo;
+					10~12 enum HorzAlignType: Int Position:HorzAlign;
+					13 Boolean Position:FlowWithText;
+					14 Boolean Position:AllowOverlap;
+					15~17 enum WidthRelToType: Int Size:WidthRelTo;
+					18~19 enum HeightRelToType: Int Size:HeightRelTo;
+					20 Boolean Size:Protect;
+					21~23 enum TextWrapType: Int TextWrap;
+					24~25 enum TextFlowType: Int TextFlow;
+					26~28 enum NumberingType: Int NumberingType;
+				}
+				Int32 Position:VertOffset;
+				Int32 Position:HorzOffset;
+				UInt32 Size:Width;
+				UInt32 Size:Height;
+				Int32 ZOrder;
+				UInt16 OutsideMargin:Left;
+				UInt16 OutsideMargin:Right;
+				UInt16 OutsideMargin:Top;
+				UInt16 OutsideMargin:Bottom;
+				UInt32 InstId;
+				~
+				# TODO_SOMETIME: 이 4 바이트의 정체는? (캡션 수?)
+				UInt32 _unknown;
+				~
+				WString ShapeComment:value;
+			}
+	}
+	Switch _Type {
+		Cases "eqed" "tbl " "gso ": # 아무 데이터도 없음 / 이미 위에서 끝남
+		Case "secd":
+			# Section Definition
+			Group Hide;
+			Group StartNumber;
+			Bits:4 {
+				0 Boolean Hide:Header;
+				1 Boolean Hide:Footer;
+				2 Boolean Hide:MasterPage;
+				3 Boolean Hide:Border;
+				4 Boolean Hide:Fill;
+				5 Boolean Hide:PageNumPos;
+				8 Boolean FirstBorder;
+				9 Boolean FirstFill;
+				16~18 Int TextDirection;
+				19 Boolean Hide:EmptyLine;
+				20~21 enum PageStartsOnType: Int StartNumber:PageStartsOn;
+				# TODO: 22: 원고지 정서법 적용 여부
+			}
+			UInt16 SpaceColumns;
+			UInt16 LineGrid;
+			UInt16 CharGrid;
+			UInt32 TabStop;
+			# TODO: Page 기본값은 0? 1?
+			UInt16 StartNumber:Page;
+			UInt16 StartNumber:Figure;
+			UInt16 StartNumber:Table;
+			UInt16 StartNumber:Equation;
+			# TODO: 뭔가 빠진 듯 한데
+			# TODO_SOMETIME: 뒤에 다른 설정 데이터가 같이 있나?
+		Case "cold":
+			Bits:2 {
+				0~1 enum ColDefType: Int Type;
+				2~9 Int Count;
+				10~11 enum LayoutType: Int Layout;
+				12 Boolean SameSize;
+			}
+			# TODO: 데이터 더 읽기. (다양한 경우에 대해 조사)
+		Case "pgnp":
+			Bits:4 {
+				0~7 enum NumberType1: Int FormatType;
+				8~11 enum PosType: Int Pos;
+			}
+			# TODO: 데이터 더 읽기. (최신 버전에 대해 조사)
+		Else:
+			{{ console.warn("Warning [CTRL_HEADER]: not processing Control Type '%s'", attr._Type); }}
+	}
+}
+
+# 4.2.7. 문단 리스트 헤드
+record LIST_HEADER {
+	# TODO: DOC: 이게 정말 32비트인지, 아니면 16비트의 다른 필드가 더 있는지 확인하기
+	Int32 _ParaCount;
+	# DOC: 문서와 오프셋, 크기가 다른 듯.
+	Bits:2 {
+		0~2 Int TextDirection;
+		3~4 enum LineWrapType: Int LineWrap;
+		5~6 enum VertAlignType: Int VertAlign;
+	}
+	# 다른 객체(예: LIST_CELL, LIST_DRAWTEXT)들이 이 레코드 뒤에 담겨 있는 듯.
+	{{ this.offset = offset.value; }}
+}
+
+# 4.2.8. 컨트롤 임의의 데이터
+record CTRL_DATA {
+}
+
+# 4.2.9. 개체 공통 속성을 포함하는 컨트롤
+# 4.2.9.1. 표 개체
+record TABLE {
+	Bits:4 {
+		0~1 enum PageBreakType: Int PageBreak;
+		2 Boolean RepeatHeader;
+		# TODO_SOMETIME: 여기에 뭔가 있다.
+	}
+	UInt16 RowCount;
+	UInt16 ColCount;
+	UInt16 CellSpacing;
+	Group InsideMargin {
+		UInt16 Left;
+		UInt16 Right;
+		UInt16 Top;
+		UInt16 Bottom;
+	}
+	Array:RowCount _RowSizes {
+		UInt16 value;
+	}
+	UInt16 BorderFill;
+	# TODO_SOMETIME: Valid Zone Info
+}
+# LIST_HEADER가 앞에 있는 CELL
+record LIST_CELL {
+	# DOC: 문서에 설명이 없음!
+	Bits:2 {
+		0 Boolean HasMargin;
+		1 Boolean Protect;
+		2 Boolean Header;
+		3 Boolean Editable;
+		# TODO_SOMETIME: DIRTY?
+	}
+	UInt16 ColAddr;
+	UInt16 RowAddr;
+	UInt16 ColSpan;
+	UInt16 RowSpan;
+	UInt32 Width;
+	UInt32 Height;
+	Group CellMargin {
+		UInt16 Left;
+		UInt16 Right;
+		UInt16 Top;
+		UInt16 Bottom;
+	}
+	UInt16 BorderFill;
+	# TODO_SOMETIME: Name
+}
+
+# 4.2.9.2. 그리기 개체
+# 4.2.9.2.1. 개체 요소
+record SHAPE_COMPONENT {
+	# TODO: DOC: 루트인 경우에만 이 값이 중복되는 것 같은데, 확인할 것!
+	4ChID _Type;
+	4ChID _Type2;
+	{{
+		attr._IsDup = attr._Type == attr._Type2;
+		if(!attr._IsDup) offset.value -= 4;
+	}}
+	Int32 XPos;
+	Int32 YPos;
+	Word GroupLevel;
+	Word _LocalFileVersion;
+	Int32 OriWidth;
+	Int32 OriHeight;
+	Int32 CurWidth;
+	Int32 CurHeight;
+	Bits:4 {
+		0 Boolean HorzFlip;
+		1 Boolean VertFlip;
+		# TODO_SOMETIME: 16, 19번째 비트
+	}
+	Group RotationInfo {
+		UInt16 Angle;
+		Int32 CenterX;
+		Int32 CenterY;
+	}
+	Group RenderingInfo {
+		Word _Count;
+		Group TransMatrix {
+			Float64 E1; Float64 E2; Float64 E3;
+			Float64 E4; Float64 E5; Float64 E6;
+		}
+		Array:_Count _ScaRotMatrices {
+			Group ScaMatrix {
+				Float64 E1; Float64 E2; Float64 E3;
+				Float64 E4; Float64 E5; Float64 E6;
+			}
+			Group RotMatrix {
+				Float64 E1; Float64 E2; Float64 E3;
+				Float64 E4; Float64 E5; Float64 E6;
+			}
+		}
+	}
+	Switch _Type {
+		Case "$ole": # 추가 데이터 없음
+		Case "$con":
+			Word _Count;
+			Array:_Count _CTypes
+				4ChID value;
+			UInt32 InstID;
+		Cases "$rec" "$lin" "$ell" "$col" "$pol" "$arc" "$cur":
+			Group LineShape {
+				ColorRef Color;
+				Int32 Width;
+				Bits:4 {
+					0~5 enum LineType1: Int Style;
+					6~9 enum EndCapType: Int EndCap;
+					10~15 enum ArrowType: Int HeadStyle;
+					16~21 enum ArrowType: Int TailStyle;
+					22~25 enum ArrowSize: Int HeadSize;
+					26~29 enum ArrowSize: Int TailSize;
+					30 Boolean _HeadFilled;
+					31 Boolean _TailFilled;
+				}
+				{{
+					var adjustArrSize = function adjustArrSize(x){
+						if(attr.LineShape["_"+x+"Filled"]){
+							var v = attr.LineShape[x+"Style"];
+							if(v.slice(0,5) == "Empty"){
+								attr.LineShape[x+"Style"] = "Filled"+v.slice(5);
+							}
+						}
+					};
+					adjustArrSize.call(this, "Head");
+					adjustArrSize.call(this, "Tail");
+				}}
+				enum OutlineStyleType: Byte OutlineStyle;
+			}
+			micro FillBrush: FillBrush;
+			Group Shadow {
+				UInt32 Type;
+				ColorRef Color;
+				Int32 OffsetX; Int32 OffsetY;
+			}
+			UInt32 InstID;
+			Byte LineShape:Alpha;
+			Byte Shadow:Alpha;
+		Else:
+			{{
+				console.warn("Warning [SHAPE_COMPONENT]: not processing ShapeComponent Type '%s'", attr._Type);
+				console.warn("%s | %s", attr._Type, bufferToString(data.slice(offset.value)))
+			}}
+	}
+}
+
+# 4.2.9.2.2. 선 개체
+record SHAPE_COMPONENT_LINE {
+	Int32 StartX; Int32 StartY;
+	Int32 EndX; Int32 EndY;
+	# DOC: 이곳이 4바이트인 것 같음
+	Bits:2 {
+		0 Boolean IsReverseHV;
+	}
+}
+
+# SHAPE_COMPONENT_LINE과 같고, 부모의 타입으로 알아 내야 됨.
+record SHAPE_COMPONENT_CONNECTLINE {
+	Int32 StartX; Int32 StartY;
+	Int32 EndX; Int32 EndY;
+	Int32 Type;
+	UInt32 StartSubjectID;
+	UInt32 StartSubjectIndex;
+	UInt32 EndSubjectID;
+	UInt32 EndSubjectIndex;
+	UInt32 _Count;
+	Array:_Count _ControlPoints {
+		Int32 X; Int32 Y;
+		Word Type;
+	}
+	# TODO_SOMETIME: 뒤에 뭐가 더 있는 것 같음 (4바이트)
+}
+
+# 4.2.9.2.3. 사각형 개체
+record SHAPE_COMPONENT_RECTANGLE {
+	Byte Ratio;
+	# DOC: 문서와 다르게 이렇게 저장됨
+	Int32 X0; Int32 Y0;
+	Int32 X1; Int32 Y1;
+	Int32 X2; Int32 Y2;
+	Int32 X3; Int32 Y3;
+}
+
+# 4.2.9.2.4. 타원 개체
+record SHAPE_COMPONENT_ELLIPSE {
+	Bits:4 {
+		0 Boolean IntervalDirty;
+		1 Boolean HasArcProperty;
+		# TODO: DOC: 2~7은?
+		8~9 enum ArcType: Int ArcType;
+	}
+	Int32 CenterX; Int32 CenterY;
+	Int32 Axis1X; Int32 Axis1Y;
+	Int32 Axis2X; Int32 Axis2Y;
+	Int32 Start1X; Int32 Start1Y;
+	Int32 End1X; Int32 End1Y;
+	Int32 Start2X; Int32 Start2Y;
+	Int32 End2X; Int32 End2Y;
+}
+
+# 4.2.9.2.5. 다각형 개체
+record SHAPE_COMPONENT_POLYGON {
+	# DOC: 32비트임
+	UInt32 _Count;
+	# DOC: 이렇게 저장됨
+	Array:_Count _Points {
+		Int32 X; Int32 Y;
+	}
+	# TODO_SOMETIME: 뒤에 뭐가 더 있는 것 같음 (4바이트)
+}
+
+# 4.2.9.2.6. 호 개체
+record SHAPE_COMPONENT_ARC {
+	# TODO: DOC: 이 1바이트가 Type인 것 같은데, 확인하기
+	Byte _Type;
+	Int32 CenterX; Int32 CenterY;
+	Int32 Axis1X; Int32 Axis1Y;
+	Int32 Axis2X; Int32 Axis2Y;
+}
+
+# 4.2.9.2.7. 곡선 개체
+record SHAPE_COMPONENT_CURVE {
+	# DOC: 32비트임
+	UInt32 _Count;
+	# DOC: 이렇게 저장됨
+	Array:_Count _Points {
+		Int32 _X; Int32 _Y;
+	}
+	{{ attr._Count--; }}
+	Array:_Count _Types {
+		enum SegmentType: Byte value;
+	}
+	{{ attr._Count++; }}
+	# TODO_SOMETIME: 다각형 개체처럼 뒤에 뭐가 더 있음.
+}
+
+# LIST_HEADER가 앞에 있는 DRAWTEXT
+record LIST_DRAWTEXT {
+	Word _Unknown1;
+	Group TextMargin {
+		UInt16 Left;
+		UInt16 Right;
+		UInt16 Top;
+		UInt16 Bottom;
+	}
+	UInt32 LastWidth;
+	# TODO: 더 채워넣기
+}
+
+# 4.2.9.3. 한글 스크립트 수식 (한글 97 방식 수식)
+record EQEDIT {
+	Bits:4 {
+		0 Boolean LineMode;
+	}
+	Group Script {
+		WString value;
+	}
+	UInt32 BaseUnit;
+	ColorRef TextColor;
+	Int16 BaseLine;
+	# TODO_SOMETIME: 이것 뜻 찾기
+	Int16 _unknown;
+	# 문서에 없는 것
+	WString Version;
+}
+
+# 4.2.9.4. 그림 개체
+# TODO 이게 정말 맞는 건지 확인하기
+record SHAPE_COMPONENT_PICTURE {
+	# TODO
+}
+
+# 4.2.9.5. OLE 개체
+record SHAPE_COMPONENT_OLE {
+	# DOC: 2바이트가 아니라 4바이트임
+	Bits:4 {
+		0~7 Int _DVASPECT;
+		8 Boolean HasMoniker;
+		# TODO: EqBaseLine: HML에서 어떻게 저장되는지 확인하기
+		9~15 Int EqBaseLine;
+		16~21 enum ObjetType: Int ObjetType;
+	}
+	{{
+		if(attr._DVASPECT & 1) attr.DrawAspect = "Content";
+		if(attr._DVASPECT & 2) attr.DrawAspect = "ThumbNail";
+		if(attr._DVASPECT & 4) attr.DrawAspect = "Icon";
+		if(attr._DVASPECT & 8) attr.DrawAspect = "DocPrint";
+	}}
+	Int32 ExtentX;
+	Int32 ExtentY;
+	UInt16 BinItem;
+	Group LineShape {
+		# TODO
+	}
+}
+
+# ??? TODO: 이것들 분류 찾기
+record SHAPE_COMPONENT_TEXTART {
+	# TODO
+}
+
+# 4.2.10.1.1. 용지 설정
+record PAGE_DEF {
+	HWPUnit Width;
+	HWPUnit Height;
+	Group PageMargin {
+		HWPUnit Left;
+		HWPUnit Right;
+		HWPUnit Top;
+		HWPUnit Bottom;
+		HWPUnit Header;
+		HWPUnit Footer;
+		HWPUnit Gutter;
+	}
+	Bits:4 {
+		0 Int Landscape;
+		1~2 enum GutterType: Int GutterType;
+	}
+}
+
+# 4.2.10.1.2. 각주/미주 모양
+record FOOTNOTE_SHAPE {
+	Group AutoNumFormat;
+	Group NoteLine;
+	Group NoteSpacing;
+	Group NoteNumbering;
+	Group NotePlacement;
+	Bits:4 {
+		0~7 enum NumberType2: Int AutoNumFormat:Type;
+		# 각주인지 미주인지에 따라 달라짐!
+		8~9 Int NotePlacement:Place;
+		10~11 enum NoteNumberingType: Int NoteNumbering:Type;
+		12 Boolean AutoNumFormat:Superscript;
+		13 Boolean NotePlacement:BeneathText;
+	}
+	WChar AutoNumFormat:UserChar;
+	WChar AutoNumFormat:PrefixChar;
+	WChar AutoNumFormat:SuffixChar;
+	UInt16 NoteNumbering:NewNumber;
+	# 문서가 틀림! (16비트가 아니라 32비트)
+	# Length가 -1이 될 수도 있는 듯
+	Int32 NoteLine:Length;
+	UInt16 NoteSpacing:AboveLine;
+	UInt16 NoteSpacing:BelowLine;
+	UInt16 NoteSpacing:BetweenNotes;
+	enum LineType1: UInt8 NoteLine:Type;
+	enum LineWidth: UInt8 NoteLine:Width;
+	ColorRef NoteLine:Color;
+}
+
+# 4.2.10.1.3. 쪽/테두리 배경
+record PAGE_BORDER_FILL {
+	Bits:4 {
+		0 Boolean TextBorder;
+		1 Boolean HeaderInside;
+		2 Boolean FooterInside;
+		3~4 enum FillAreaType: Int FillArea;
+	}
+	Group PageOffset {
+		UInt16 Left;
+		UInt16 Right;
+		UInt16 Top;
+		UInt16 Bottom;
+	}
+	UInt16 BorderFill;
+}
+
+# ???? TODO: 이것들 분류 찾기
+record MEMO_LIST {
+	# TODO
+}
