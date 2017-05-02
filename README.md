@@ -55,14 +55,15 @@ default값은 해당 디렉토리의 input, output입니다.
 
 # release NOTE 
 
-### V0.1 2017. 05. 02 Tue
+* ### Version 0.1 (2017. 05. 02 Tue)
 
-* pdf -> html 변환 완료
-* hwp -> hwpml로 변환완료
-* rtf -> rtfml로 변환완료
-* docx은 불안정하게 html로 변환완료. 스타일 적용 X, P tag단위로만 구분지음.
+    * pdf -> html 변환 완료
+    - hwp -> hwpml로 변환완료
+    - rtf -> rtfml로 변환완료
+    - docx은 불안정하게 html로 변환완료. 스타일 적용 X, P tag단위로만 구분지음.
 
 * rtf파일 구조
+
 ```bash
 newline (/par)
 tabs (/tab)
