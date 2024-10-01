@@ -89,9 +89,7 @@ paper size (/paperw, /paperh)
 margins (/margl, /margr, /margt, /margb)
 ```
 
-## license
-
-(주)Edipse에서 개발이 진행중입니다.
+## contributors
 
 해당 프로젝트에서 ml파일을 html로 바꾸는 부분에서 상당한 노가다가 예상이 되어 힘이되어 주시는 분들에게 감사를 표하겠습니다.
 
